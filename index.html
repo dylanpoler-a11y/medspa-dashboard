@@ -185,7 +185,12 @@ body::before {
   text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted);
   border-bottom: 1px solid var(--border); text-align: left;
   background: rgba(10,14,26,0.3); position: sticky; top: 0;
+  cursor: pointer; user-select: none; transition: color 0.2s;
 }
+.data-table thead th:hover { color: var(--text-primary); }
+.data-table thead th.sorted { color: var(--accent-pink); }
+.sort-arrow { font-size: 10px; margin-left: 4px; opacity: 0.4; }
+.data-table thead th.sorted .sort-arrow { opacity: 1; }
 .data-table tbody tr {
   border-bottom: 1px solid var(--border);
   transition: background 0.2s;
@@ -309,13 +314,7 @@ body::before {
       <div style="overflow-y: auto; max-height: calc(100vh - 500px);">
         <table class="data-table">
           <thead>
-            <tr>
-              <th>Company</th>
-              <th>Location</th>
-              <th>Ownership</th>
-              <th>Grade</th>
-              <th>Owners</th>
-              <th>Website</th>
+            <tr id="tableHead">
             </tr>
           </thead>
           <tbody id="tableBody"></tbody>
@@ -350,6 +349,8 @@ let filterState = '';
 let filterOwnership = '';
 let searchQuery = '';
 let searchTimeout = null;
+let sortField = '';
+let sortDir = 'asc';
 
 const ownershipColors = {
   'Small business owner': { color: '#10b981', bg: 'rgba(16,185,129,0.15)', border: 'rgba(16,185,129,0.3)', cls: 'tag-small-biz' },
@@ -414,6 +415,37 @@ function filterCompanies() {
       (c.owners && c.owners.toLowerCase().includes(q)) ||
       (c.website && c.website.toLowerCase().includes(q))
     );
+  }
+
+  // Sort
+  if (sortField) {
+    filtered.sort((a, b) => {
+      let va, vb;
+      switch (sortField) {
+        case 'name':
+          va = (a.name || '').toLowerCase(); vb = (b.name || '').toLowerCase();
+          break;
+        case 'state':
+          va = (a.state || '').toLowerCase(); vb = (b.state || '').toLowerCase();
+          break;
+        case 'ownership':
+          va = (a.ai_ownership_research || 'zzz').toLowerCase(); vb = (b.ai_ownership_research || 'zzz').toLowerCase();
+          break;
+        case 'grade':
+          va = a.contact_grade || 99; vb = b.contact_grade || 99;
+          break;
+        case 'owners':
+          va = (a.owners || 'zzz').toLowerCase(); vb = (b.owners || 'zzz').toLowerCase();
+          break;
+        case 'website':
+          va = (a.website || 'zzz').toLowerCase(); vb = (b.website || 'zzz').toLowerCase();
+          break;
+        default: return 0;
+      }
+      if (va < vb) return sortDir === 'asc' ? -1 : 1;
+      if (va > vb) return sortDir === 'asc' ? 1 : -1;
+      return 0;
+    });
   }
 
   totalFiltered = filtered.length;
@@ -640,8 +672,37 @@ function toggleState(state) {
 }
 
 // ── Table ─────────────────────────────────────────────────────────
+const columns = [
+  { key: 'name', label: 'Company' },
+  { key: 'state', label: 'Location' },
+  { key: 'ownership', label: 'Ownership' },
+  { key: 'grade', label: 'Grade' },
+  { key: 'owners', label: 'Owners' },
+  { key: 'website', label: 'Website' },
+];
+
+function sortBy(field) {
+  if (sortField === field) {
+    sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortField = field;
+    sortDir = field === 'grade' ? 'asc' : 'asc';
+  }
+  page = 1;
+  loadCompanies();
+}
+
+function renderHeaders() {
+  document.getElementById('tableHead').innerHTML = columns.map(col => {
+    const isSorted = sortField === col.key;
+    const arrow = isSorted ? (sortDir === 'asc' ? '\u25B2' : '\u25BC') : '\u25B4';
+    return `<th class="${isSorted ? 'sorted' : ''}" onclick="sortBy('${col.key}')">${col.label}<span class="sort-arrow">${arrow}</span></th>`;
+  }).join('');
+}
+
 function loadCompanies() {
   filterCompanies();
+  renderHeaders();
   renderTable();
 }
 
