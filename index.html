@@ -323,8 +323,8 @@ body::before {
       <div class="pagination">
         <div class="pagination-info" id="paginationInfo"></div>
         <div class="pagination-btns">
-          <button class="page-btn" id="prevBtn" onclick="prevPage()">\u2190 Previous</button>
-          <button class="page-btn" id="nextBtn" onclick="nextPage()">Next \u2192</button>
+          <button class="page-btn" id="prevBtn" onclick="prevPage()">← Previous</button>
+          <button class="page-btn" id="nextBtn" onclick="nextPage()">Next →</button>
         </div>
       </div>
     </div>
@@ -349,7 +349,7 @@ let filterState = '';
 let filterOwnership = '';
 let searchQuery = '';
 let searchTimeout = null;
-let sortField = '';
+let sortField = 'grade';
 let sortDir = 'asc';
 
 const ownershipColors = {
